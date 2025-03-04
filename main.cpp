@@ -1,10 +1,13 @@
+#include <algorithm>
 #include <iostream>
+#include <vector>
 #include "iterator"
+#include "numeric"
 using namespace std;
 
 struct Item {
-    uint cost;
-    uint weight;
+    int cost;
+    int weight;
 };
 
 vector<Item> getItems(){
@@ -17,19 +20,18 @@ vector<Item> getItems(){
     };
 }
 
-vector<Item> getOptimalItemsSet(uint maxWeight, vector<Item> items){
-    uint maxCost = 0;
-    vector<int> indexesOfMaxCost;
+vector<Item> getOptimalItemsSet(int maxWeight, const vector<Item>& items){
+    int maxCost = 0;
 
-    int n = items.size() + 1;
-    vector<int> tmp(n, 0);
+    vector<Item> result;
+
+    const int n = items.size() + 1;
+    vector<bool> tmp(n, false);
     while (tmp.at(n - 1) != 1){
-//        copy(tmp.begin(), tmp.end(), ostream_iterator<int>(cout, " "));
-//        cout << endl;
-        uint tmpMaxCost = 0;
-        uint tmpWeight = 0;
+        int tmpMaxCost = 0;
+        int tmpWeight = 0;
         for (int j = 0; j < items.size(); j++) {
-            if (tmp.at(j) != 1)
+            if (tmp.at(j) != true)
                 continue;
 
             tmpWeight += items.at(j).weight;
@@ -38,26 +40,33 @@ vector<Item> getOptimalItemsSet(uint maxWeight, vector<Item> items){
 
         if (tmpWeight < maxWeight && tmpMaxCost > maxCost) {
             maxCost = tmpMaxCost;
-            indexesOfMaxCost = tmp;
         }
 
         int i = 0;
         while (tmp.at(i) == 1){
-            tmp.at(i) = 0;
+            tmp.at(i) = false;
             i++;
         }
-        tmp.at(i) = 1;
+        tmp.at(i) = true;
     }
 
-    cout << "Max cost is: " << maxCost << endl << "Indexes: " << endl;
-    copy(indexesOfMaxCost.begin(), indexesOfMaxCost.end(), ostream_iterator<int>(cout, " "));
+		copy_if(items.begin(), items.end(), back_inserter(result),
+		[&, index = 0] (const Item&) mutable {return tmp[index++]; });
 
-    return getItems();
+    return result;
 }
 
 int main() {
-    uint maxWeight = 12;
+    int maxWeight = 12;
 
     auto items = getItems();
     auto result = getOptimalItemsSet(maxWeight, items);
+
+		for (auto [cost, weight] : result)
+			cout << "Item cost: " << cost << " Item weight: " << weight << endl;
+
+		/*int totalCost = std::accumulate(result.begin(), result.end(), 0, 
+                                    [](int sum, const Item& item) {
+                                        return sum + item.cost;
+                                    });*/
 }
